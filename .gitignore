@@ -1,0 +1,60 @@
+# ── PYTHON ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+
+# ── VIRTUAL ENVIRONMENTS ──────────────────────────────────────
+venv/
+venv_new/
+
+# ── ENVIRONMENT VARIABLES & SECRETS ──────────────────────────
+.env
+*.env
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# ── ML MODEL FILES (too large for Git) ────────────────────────
+*.pkl
+*.joblib
+
+# ── CHROMADB VECTOR STORE (generated locally) ─────────────────
+chroma_db/
+chromadb/
+
+# ── KNOWLEDGE BASE PDFs (copyright) ──────────────────────────
+knowledge_pdfs/
+*.pdf
+
+# ── DATABASE BACKUPS (contains real patient data) ─────────────
+aoun_backup.sql
+*.dump
+*.sql.gz
+
+# ── FLUTTER ───────────────────────────────────────────────────
+aoun_app/.dart_tool/
+aoun_app/build/
+aoun_app/.flutter-plugins
+aoun_app/.flutter-plugins-dependencies
+aoun_app/.packages
+aoun_app/*.iml
+aoun_app/.idea/
+
+# ── ANDROID ───────────────────────────────────────────────────
+aoun_app/android/local.properties
+aoun_app/android/.gradle/
+aoun_app/android/app/debug/
+aoun_app/android/app/profile/
+aoun_app/android/app/release/
+
+# ── IDE ───────────────────────────────────────────────────────
+.idea/
+*.iml
+*.log
+.vscode/
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

@@ -271,13 +271,13 @@ GP2 additions: Emergency screen · Facial wellness · RAG chatbot · ML feedback
 
 ## Status
 
-🚧 In Progress — Expected June 2026
+Completed ✅
 
 ---
 
 ## Disclaimer
 
-Aoun is an academic research project developed at Applied Science Private University. It is designed to support clinical decision-making and does **not** replace medical diagnosis, clinical judgment, or professional oncology care. All risk predictions and wellness assessments are advisory only.
+Aoun is an academic research project developed. It is designed to support clinical decision-making and does **not** replace medical diagnosis, clinical judgment, or professional oncology care. All risk predictions and wellness assessments are advisory only.
 
 ---
 
@@ -289,7 +289,7 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 
 ## Dataset
 
-The ML model was trained on the publicly available **Cancer Patient Data Sets** (`cancer_patient_data_sets.csv`) from Kaggle.
+The ML model was trained on the publicly available **Cancer Patient Data Sets** (`cancer_patient_data_sets.csv`) from Kaggle with SMOTE applied to make it more authentic.
 
 | Property | Value |
 |---|---|

@@ -1,0 +1,29 @@
+# Aoun backend + ML service dependencies (Python 3.11)
+# Generated from source imports. Pin versions before a production release.
+
+# --- Web framework / server ---
+fastapi
+uvicorn[standard]
+python-multipart          # file uploads (face wellness image)
+httpx                     # outbound calls (Ollama, services)
+pydantic
+
+# --- Database ---
+SQLAlchemy
+psycopg2-binary           # PostgreSQL driver
+python-dotenv             # DATABASE_URL / env config
+
+# --- Machine learning ---
+scikit-learn              # RandomForest (loaded via joblib at inference)
+joblib
+numpy
+pandas
+
+# --- Computer vision (facial wellness) ---
+opencv-python             # cv2
+
+# --- RAG chatbot ---
+chromadb
+sentence-transformers     # all-MiniLM-L6-v2 embeddings
+ollama                    # Mistral-7B client
+pypdf                     # PDF ingestion

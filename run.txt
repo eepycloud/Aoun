@@ -1,0 +1,57 @@
+Aoun - Demo Setup Guide
+Run all commands as Administrator in PowerShell.
+========================================
+
+
+1 - Start PostgreSQL
+--------------------
+net start postgresql-18
+
+Verify:
+psql -U postgres -h localhost -p 8000 -d aoun_db
+(enter your local DB password when prompted)
+Type \q to exit.
+
+
+2 - Start Ollama (run BEFORE the services)
+------------------------------------------
+ollama serve
+
+Get-Process ollama
+
+If model not pulled yet:
+ollama pull mistral:7b-instruct
+
+
+3 - Start ML Service (port 8001)
+---------------------------------
+cd ml_service
+venv\Scripts\activate
+python -m uvicorn ml_main:app --host 0.0.0.0 --port 8001 --reload
+
+
+4 - Start Backend Service (port 8002)
+--------------------------------------
+cd backend
+venv\Scripts\activate
+$env:DEMO_CACHE_ENABLED="true"
+python -m uvicorn backend_main:app --host 0.0.0.0 --port 8002 --reload
+
+
+5 - ADB Reverse (physical Android device only)
+-----------------------------------------------
+Connect phone via USB, then run:
+adb reverse tcp:8002 tcp:8002
+
+
+6 - Start Flutter App
+----------------------
+cd aoun_app
+flutter run
+
+
+Demo Credentials (supervised demo only — reset after each session)
+------------------------------------------------------------------
+Admin   : admin@aoun.health    / Admin@123
+Doctor  : doctor@aoun.health   / Doctor@123
+Patient : patient@aoun.health  / patient123

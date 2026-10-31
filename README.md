@@ -1,303 +1,187 @@
-# Aoun (عون) — Intelligent Cancer Patient Monitoring System
+# Aoun (عون) — Cancer Patient Monitoring Prototype
 
-> AI-powered platform for continuous cancer patient monitoring, risk stratification, and intelligent medical assistance — fully local, no cloud dependency.
+An academic graduation project combining a Flutter app, FastAPI/PostgreSQL backend, Random Forest classifier, a Mistral-7B RAG chatbot, and experimental OpenCV image analysis.
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue?style=flat-square&logo=python)](https://python.org)
-[![Flutter](https://img.shields.io/badge/Flutter-3.41-blue?style=flat-square&logo=flutter)](https://flutter.dev)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-green?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+The project demonstrates how these components can be connected in a patient-monitoring workflow. It is not clinically validated and should not be used to make medical decisions.
 
----
+## What is implemented
 
-## What is Aoun?
+| Component | Implementation and scope |
+| --- | --- |
+| Mobile app | Flutter screens for patient, doctor, and admin workflows |
+| Backend | FastAPI endpoints and PostgreSQL storage for profiles, symptoms, and alerts |
+| ML service | Random Forest predicts the dataset's High / Medium / Low labels from 23 symptom and risk-factor features |
+| Chatbot | Mistral-7B through Ollama, with ChromaDB retrieval over curated FAQ content and medical PDFs |
+| Feedback | Source weighting changes based on feedback; improvement in answer quality has not been established by a controlled evaluation |
+| Facial analysis | Experimental OpenCV image cues such as color statistics and eye geometry; these are not validated measures of illness |
+| Push notifications | Optional Firebase integration in the code; end-to-end delivery remains unverified |
 
-Cancer patients spend most of their time between clinic visits with no intelligent monitoring. Aoun closes that gap.
+## Architecture and local operation
 
-It is a mobile health platform that lets patients log daily symptoms, get AI-generated risk assessments, perform facial wellness checks, and consult an intelligent health chatbot — while their oncologist receives real-time alerts and monitors risk trends from a dedicated dashboard.
-
-Everything runs locally. No cloud. No API keys. Patient data never leaves the device.
-
----
-
-## Features
-
-| Feature | Description |
-|---|---|
-| 🧠 **ML Risk Prediction** | Random Forest evaluating 23 clinical features. 92% accuracy on a held-out test set of 148,746 records. Classifies risk as High / Medium / Low. |
-| 💬 **RAG Medical Chatbot** | Mistral-7B via Ollama + ChromaDB vector store with 254 indexed entries from a curated FAQ and NCI/CancerCare clinical PDFs. Feedback-weighted retrieval that improves with use. |
-| 📷 **Facial Wellness Analyzer** | OpenCV pipeline extracting pallor, eye fatigue, skin uniformity, and skin dullness from selfie photos to detect physical illness signs. No training data needed. |
-| 🔔 **Real-time Doctor Alerts** | Firebase Cloud Messaging pushes High-risk patient updates to the doctor's device instantly. |
-| 📊 **Doctor Triage Dashboard** | Patients sorted by ML risk level. Full symptom history. ML feedback buttons (correct / incorrect) for model improvement loop. |
-| 🚨 **Emergency Screen** | Symptom-specific guidance cards with one-tap emergency calling. Works offline. |
-| 🔁 **Learning Loop** | Doctor and patient feedback updates RAG source weights. Poorly rated sources are penalized or blocked. |
-
----
-
-## Tech Stack
-
-| Layer | Technologies |
-|---|---|
-| Mobile | Flutter 3.41 · Dart · fl_chart · Firebase Messaging |
-| Backend | FastAPI · Python 3.11 · PostgreSQL · SQLAlchemy · Uvicorn |
-| ML Model | scikit-learn · Random Forest · pandas · NumPy |
-| Computer Vision | OpenCV · Haar Cascade · LAB color space |
-| RAG Chatbot | Ollama Mistral-7B · ChromaDB · all-MiniLM-L6-v2 (384-dim) |
-| Knowledge Base | pypdf · NCI / CancerCare clinical PDFs · 254 indexed entries |
-| Notifications | Firebase Cloud Messaging (FCM) |
-
----
-
-## System Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                  Flutter App                    │
-│  Patient · Doctor · Admin — 13 screens          │
-└───────────────────┬─────────────────────────────┘
-                    │ HTTP REST
-┌───────────────────▼─────────────────────────────┐
-│              FastAPI Backend  :8002              │
-│                                                 │
-│  ┌─────────────┐  ┌──────────────────────────┐  │
-│  │ ML Service  │  │     RAG Chatbot           │  │
-│  │ :8001       │  │  Mistral-7B + ChromaDB    │  │
-│  │ Random      │  │  254 medical entries      │  │
-│  │ Forest 92%  │  │  Feedback-weighted        │  │
-│  └─────────────┘  └──────────────────────────┘  │
-│                                                 │
-│  ┌─────────────┐  ┌──────────────────────────┐  │
-│  │   OpenCV    │  │      PostgreSQL           │  │
-│  │   Facial    │  │      Database             │  │
-│  │   Wellness  │  │      Port 5432            │  │
-│  └─────────────┘  └──────────────────────────┘  │
-└───────────────────┬─────────────────────────────┘
-                    │
-         ┌──────────▼──────────┐
-         │   Firebase FCM      │
-         │   Doctor Alerts     │
-         └─────────────────────┘
+```text
+Flutter app
+    | HTTP requests
+    v
+FastAPI backend :8002 ---- PostgreSQL
+    |                 |
+    |                 +-- RAG retrieval / ChromaDB / local Ollama
+    +-- ML and image-analysis service :8001
+    +-- Optional Firebase cloud push integration
 ```
 
----
+The backend, database, model, and Ollama services can be hosted locally. The app communicates with a backend; inference is not described as running entirely on the phone. Firebase push delivery is a cloud dependency when enabled. Patient information is exchanged with the configured backend, so the project does not claim that all information stays on the device.
 
-## ML Model Details
+## Model experiment and evidence limits
 
-- **Algorithm:** Random Forest Classifier (100 estimators)
-- **Pipeline:** SimpleImputer (median) → StandardScaler → RandomForestClassifier
-- **Features:** 23 — Age, Gender, 21 symptom / risk-factor indicators
-- **Training data:** 1,000 real Kaggle oncology records, class-balanced with SMOTE on the training split only → 594,982 train / 148,746 test (80/20 stratified). The test set is excluded from SMOTE.
-- **Accuracy:** 92.0% (0.9201) · Precision: 0.9200 · Recall (macro): 0.9195 · F1: 0.9197
-- **Output:** Risk level (High / Medium / Low) + confidence + top contributing features
-- **Top feature:** Coughing of Blood
-- **Inference:** <200 ms · Serialized to `aoun_model.pkl`
+The committed [training notebook](main.ipynb) reads an external file named `cancer_patient_data.csv`. Its saved output reports a 743,728-row input and a 148,746-row test portion. The notebook uses a stratified 80/20 split, fits the median imputer and scaler on the training portion, and compares Random Forest, XGBoost, and logistic regression.
 
-> **Note on scale:** the source symptoms are scored 1–8. The patient-facing app sliders use a 0–10 scale for usability; a value of 0 is mapped to 1 at inference to stay within the model's valid input range.
+| Metric | Random Forest result recorded in the notebook |
+| --- | --- |
+| Accuracy | 0.9201 |
+| Macro precision | 0.9201 |
+| Macro recall | 0.9195 |
+| Macro F1 | 0.9198 |
 
-### Confusion Matrix (148,746 test patients)
+The Random Forest configuration is 100 estimators, maximum depth 15, and random seed 42. These are historical notebook results, not a newly reproduced benchmark or evidence of clinical performance.
 
-|  | Predicted High | Predicted Medium | Predicted Low |
-|---|---|---|---|
-| **Actual High** | **49,929** | 1,815 | 2,004 |
-| **Actual Medium** | 2,223 | **41,371** | 1,966 |
-| **Actual Low** | 2,094 | 1,782 | **45,562** |
+Earlier project notes identified a 1,000-record public Kaggle source and described synthetic expansion with SMOTE. The expansion step and the input CSV are not included in the public notebook. Therefore:
 
----
+- The 743,728 rows must not be represented as 743,728 independently observed patients.
+- The published notebook does not establish that synthetic expansion occurred only after the train/test split, or that the test rows are independent of the expansion process.
+- The source dataset's clinical provenance is not verified here. These labels are not validated outcomes for monitoring patients during cancer treatment.
+- Reproducing the original source, documenting expansion, splitting original observations before augmentation, and evaluating on an untouched test set are required before claiming a reliable generalization result.
 
-## Facial Wellness Analyzer
+The recorded score is retained for transparency. Current portfolio descriptions focus on the implemented system rather than an inflated patient count.
 
-Four clinical features extracted from a selfie photo using OpenCV:
+## RAG and image analysis
 
-| Feature | Method | Weight |
-|---|---|---|
-| Pallor Score | LAB color space A-channel mean | 40% |
-| Eye Fatigue | Haar cascade height/width ratio | 35% |
-| Skin Uniformity | LAB L-channel standard deviation | 15% |
-| Skin Dullness | LAB L-channel mean | 10% |
+The chatbot retrieves FAQ and PDF passages with `all-MiniLM-L6-v2` embeddings and ChromaDB, then supplies context to `mistral:7b-instruct` through Ollama. The repository documents an initial knowledge base of 254 entries; this is a project snapshot, not a fixed guarantee for a fresh installation. Sources include curated FAQ material and NCI/CancerCare PDFs. Patient context and conversation memory are also used by the backend.
 
-**Output:** Illness score 0–100 → `Appears Well` / `Mild Fatigue` / `Appears Unwell`
+Feedback adjusts retrieval weights. This is a reweighting mechanism, not proof that clinical correctness or response quality improves over time.
 
-**Evaluation:** 88% face-detection success (44/50 test photos) · 100% EXIF orientation correction (12/12). The `_fix_rotation()` routine uses the Haar cascade as a rotation oracle, so no EXIF parsing library is required.
+The OpenCV module computes heuristic image cues. Face detection or successful orientation handling does not establish diagnostic accuracy. No clinical validation of the resulting wellness score is claimed.
 
-Grounded in: *Forte et al. (2021). Deep Learning for Identification of Acute Illness and Facial Cues of Illness. Frontiers in Medicine, 8, 661309.*
+## Setup
 
-> Proof-of-concept only — not clinically validated. Formal validation with oncology patients requires medical ethics board approval and is documented as future work.
+This repository preserves an academic prototype. The model artifacts, original experiment CSV, database credentials, and medical PDF files are not supplied as a complete reproducible bundle. A fresh clone needs configuration before the full app can run.
 
----
+### 1. Dependencies
 
-## RAG Chatbot Knowledge Base
-
-Three source types are combined at query time and stored in a ChromaDB vector store (all-MiniLM-L6-v2, 384-dim). Every response carries citation chips tracing the answer back to its source.
-
-| Source | Type | Notes |
-|---|---|---|
-| Curated FAQ (`knowledge_base.py`) | Structured | 20 evidence-based Q&A entries across 7 categories, adapted from ACS / Macmillan / Cancer Research UK |
-| NCI *Chemotherapy and You* | Real PDF | Ingested page-by-page (~900-char chunks, 150-char overlap) |
-| CancerCare *Chemo Side Effects* | Real PDF | Neutropenia monitoring, treatment-specific symptoms |
-| Live patient context | PostgreSQL | Built per-message from 5 tables (profile, latest symptoms, 7-day trends, lifestyle averages, unread alerts) |
-| Conversation memory | ChromaDB | Past turns retrieved semantically for multi-turn coherence |
-| **Total indexed entries** | | **254** |
-
-**Retrieval:** Over-fetch 3× → re-rank by feedback weights → inject into the Mistral-7B prompt alongside live patient data from PostgreSQL. Thumbs-up: +5% boost per vote; thumbs-down: −10% penalty per vote; net rating ≤ −3 permanently blocks a source.
-
----
-
-## Getting Started
-
-### Prerequisites
-
-```
-Python 3.11+
-Flutter 3.41+
-PostgreSQL 18
-Ollama (https://ollama.com)
-```
-
-### 1. Clone and set up backend
+Use Python 3.11+, Flutter, PostgreSQL, and Ollama. From the repository root:
 
 ```bash
-git clone https://github.com/<your-org>/aoun.git
-cd aoun/backend
-python -m venv venv
-venv\Scripts\activate        # Windows
-pip install -r requirements.txt
+git clone https://github.com/eepycloud/Aoun.git
+cd Aoun
+python -m venv .venv
 ```
 
-### 2. Train the ML model
-
-The trained model files are not included in the repo. Generate them from the notebook:
-
-```
-1. Download the "Cancer Patient Data Sets" CSV from Kaggle (see Dataset section).
-2. Open gp2.ipynb (Google Colab or Jupyter) and point the read_csv path at your CSV.
-3. Run all cells. This produces:
-     aoun_model.pkl, aoun_scaler.pkl, aoun_imputer.pkl,
-     aoun_label_encoder.pkl, aoun_features.csv
-4. Copy those 5 files into the ml_service/ folder.
-```
-
-The ML service loads these on startup, so it will not run until they are present.
-
-### 3. Set up database
+Activate the environment with `.venv\Scripts\activate` on Windows, or `source .venv/bin/activate` on macOS/Linux, then install the service dependencies:
 
 ```bash
-psql -U postgres -c "CREATE DATABASE aoun_db;"
+python -m pip install -r backend/requirements.txt
+```
+
+The training notebook additionally imports XGBoost, Matplotlib, and seaborn. It was written for Google Colab and mounts Google Drive; change those cells and the CSV path for another environment. Dependency versions are not pinned, so the original experiment environment is not fully reproduced by these instructions.
+
+### 2. Configure PostgreSQL
+
+Create a database and apply both SQL files with your PostgreSQL user:
+
+```bash
+createdb -U postgres aoun_db
 psql -U postgres -d aoun_db -f database/aoun_schema.sql
 psql -U postgres -d aoun_db -f database/chat_feedback_migration.sql
 ```
 
-### 4. Pull the LLM
+Create a local `backend/.env` with your connection settings, for example:
+
+```dotenv
+DATABASE_URL=postgresql://postgres:YOUR_LOCAL_PASSWORD@localhost:5432/aoun_db
+ML_SERVICE_URL=http://localhost:8001
+```
+
+Do not commit your password. The fallback connection in `backend/database.py` uses port 8000, so set `DATABASE_URL` explicitly for your actual database port.
+
+### 3. Prepare the model artifacts
+
+Open [main.ipynb](main.ipynb), configure its input CSV, and run it only with data whose provenance you understand. Running it with a different source does not reproduce the saved 92% result. For a defensible new evaluation, split original observations before any augmentation and reserve the test set.
+
+Copy the generated files into `ml_service/`:
+
+```text
+aoun_model.pkl
+aoun_scaler.pkl
+aoun_imputer.pkl
+aoun_label_encoder.pkl
+aoun_features.csv
+```
+
+These files must come from the same training run. The ML service loads model artifacts at startup and cannot start without them. Never load pickle/joblib files from an untrusted source.
+
+### 4. Prepare Ollama and retrieval
+
+Start Ollama and fetch the model in another terminal:
 
 ```bash
 ollama serve
 ollama pull mistral:7b-instruct
 ```
 
-### 5. Ingest knowledge base PDFs
+Place the PDFs you are authorized to use in `backend/knowledge_pdfs/`, then ingest them:
 
 ```bash
+cd backend
 python ingest_pdfs.py
 ```
 
-### 6. Start all services
+Model and embedding downloads require an initial internet connection. The locally hosted services can then use those downloaded assets.
+
+### 5. Start the services
+
+In separate terminals with the virtual environment activated:
 
 ```bash
-# Terminal 1 — ML service (port 8001)
-cd ml_service && python -m uvicorn ml_main:app --reload --port 8001 --host 0.0.0.0
+# From ml_service/
+python -m uvicorn ml_main:app --port 8001
 
-# Terminal 2 — Backend (port 8002)
-cd backend && python -m uvicorn backend_main:app --reload --port 8002 --host 0.0.0.0
+# From backend/
+python -m uvicorn backend_main:app --port 8002
 
-# Terminal 3 — Flutter
-cd aoun_app && flutter run
+# From aoun_app/
+flutter pub get
+flutter run
 ```
 
----
+Configure the API address in `aoun_app/lib/api_service.dart` for your emulator or device. A physical phone's localhost is not the backend computer. Bind the backend to an appropriate LAN interface only for a trusted development network.
 
-## Project Structure
+Leave Firebase disabled for local development. The backend skips push calls when no `FIREBASE_SERVER_KEY` is configured. The current push code is an unverified integration and should be reviewed before enabling it; no working production push delivery is claimed.
 
-```
-aoun/
-├── backend/
-│   ├── backend_main.py          # FastAPI entry point
-│   ├── models.py                # SQLAlchemy ORM models
-│   ├── schemas.py               # Pydantic request/response schemas
-│   ├── database.py              # DB connection and session
-│   ├── chatbot_routes.py        # Chatbot endpoints + safety guardrails
-│   ├── aoun_rag.py              # Feedback-weighted RAG pipeline
-│   ├── knowledge_base.py        # Curated FAQ entries
-│   ├── ingest_pdfs.py           # PDF ingestion into ChromaDB
-│   ├── smart_recommendations.py # Lifestyle recommendation engine
-│   └── wellness_analyzer.py     # OpenCV facial analysis
-├── ml_service/
-│   └── ml_main.py               # Random Forest inference API
-├── aoun_app/                    # Flutter app (13 screens)
-├── database/
-│   ├── aoun_schema.sql
-│   └── chat_feedback_migration.sql
-└── requirements.txt
+## Repository layout
+
+```text
+main.ipynb                         Recorded ML experiment
+backend/
+  backend_main.py                  FastAPI backend
+  database.py                      Database connection
+  aoun_rag.py                      Retrieval and source weighting
+  chatbot_routes.py                Chatbot API and Ollama calls
+  ingest_pdfs.py                    PDF ingestion
+  requirements.txt                 Shared backend / ML dependencies
+ml_service/
+  ml_main.py                       Model and image-analysis API
+  wellness_analyzer.py             Experimental OpenCV analysis
+aoun_app/                          Flutter application
+database/
+  aoun_schema.sql                  Database schema
+  chat_feedback_migration.sql       Feedback schema migration
 ```
 
----
+## Validation and remaining work
 
-## Functional Requirements
+Earlier project notes recorded 19 of 20 manual black-box checks passing, with Firebase push delivery deferred. This is a historical manual-test summary, not a current automated test run. Wearable integration was also deferred.
 
-27 of 28 functional requirements implemented.
+Further work includes reproducible data preparation and model evaluation, clinical validation, authentication and authorization review, dependency pinning, and end-to-end notification tests. The application is an academic prototype, not a production medical service.
 
-| Status | Count | Notes |
-|---|---|---|
-| ✅ Implemented | 27 | All core features |
-| ❌ Deferred | 1 | FR7: Wearable integration (hardware dependency) |
+## License and data
 
-GP2 additions: Emergency screen · Facial wellness · RAG chatbot · ML feedback loop
-
----
-
-## Testing
-
-19 of 20 black-box test cases passed. TC19 (Firebase push alert) is deferred — it requires a live production Firebase key and is not testable locally.
-
----
-
-## Known Limitations
-
-- Authentication uses standard password hashing — salted Argon2/bcrypt and JWT migration planned
-- Session-based auth only — JWT access tokens planned
-- Voice input works on Chrome/Edge only (Web Speech API)
-- Chatbot feedback quality improvement requires scale (hundreds of ratings)
-- Facial wellness analyzer is a proof-of-concept — not clinically validated
-- Firebase push notifications require a production server key not bundled with the repo
-
----
-
-## Status
-
-Completed ✅
-
----
-
-## Disclaimer
-
-Aoun is an independent academic research project. It is designed to support clinical decision-making and does **not** replace medical diagnosis, clinical judgment, or professional oncology care. All risk predictions and wellness assessments are advisory only.
-
----
-
-## License
-
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## Dataset
-
-The ML model was trained on the publicly available **Cancer Patient Data Sets** (`cancer_patient_data_sets.csv`) from Kaggle with SMOTE applied to make it more authentic.
-
-| Property | Value |
-|---|---|
-| Raw records | 1,000 patients (real) |
-| Columns | 26 — patient ID, age (14–73), gender, 21 symptom/risk-factor features, target `Level` |
-| Raw class split | High 36.5% · Medium 33.2% · Low 30.3% |
-| Balancing | SMOTE applied to the training split only |
-| After SMOTE | 743,728 records — 594,982 train / 148,746 test (80/20 stratified) |
-| Target variable | Risk level — High / Medium / Low |
-
-Real-world EHR data was not used due to patient-privacy law, IRB approval timelines, and the sensitivity of oncology records. The Kaggle dataset provides a scientifically structured training environment grounded in real clinical symptom patterns. The raw CSV is subject to Kaggle's terms and is not redistributed here — see the source on Kaggle to obtain it.
+The original project documentation states MIT licensing for the code, but this repository does not include a standalone license file. Dataset and PDF rights remain with their respective sources. The experiment CSV and real-world patient EHR data are not distributed as part of this repository.
